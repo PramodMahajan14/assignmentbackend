@@ -7,7 +7,7 @@ const usersSchema = new mongoose.Schema({
   email: { type: String, require: true },
   isVerified: { type: Boolean, default: false },
   password: String,
-  date: { type: String, default: null },
+  currentLogin: { type: Date, default: null },
 });
 
 // Task Modal Schema

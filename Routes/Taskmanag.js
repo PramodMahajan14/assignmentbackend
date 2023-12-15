@@ -6,13 +6,16 @@ const jwt = require("jsonwebtoken");
 const auth = require("../Middleware/auth");
 const { sendEMail, dateToSendEMail } = require("../MailService/Mail");
 const moment = require("moment-timezone");
-
+const newJobs = require("../MailService/jobsStore");
 // =============================Routes======================
 
+route.get("/", async (req, res) => {
+  res.send("Hii Task Management");
+});
 route.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const userId = uuidv4(); //used for generation og userId
 
     //regex for valid email
@@ -41,7 +44,7 @@ route.post("/signup", async (req, res) => {
     await newUser.save();
 
     // send verification Email
-    const link = `${process.env.SERVER_URL}/api/auth/verify/${userId}`;
+    const link = `${process.env.SERVER_URL}/v1/api/auth/verify/${userId}`;
 
     sendEMail(email, name, link, userId);
     return res.status(200).json({
@@ -55,10 +58,10 @@ route.post("/signup", async (req, res) => {
 // Verify Email
 route.get("/auth/verify/:id", async (req, res) => {
   const userId = req.params.id;
-  console.log(userId);
+  // console.log(userId);
 
   try {
-    const data = await userVerified.findOne({ userId });
+    const data = await users.findOne({ userId });
 
     // console.log(data.Item);
     if (!data) {
@@ -81,21 +84,21 @@ route.get("/auth/verify/:id", async (req, res) => {
 
 route.post("/signin", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    console.log(req.body);
+    const { Email, Password } = req.body;
+    // console.log(req.body);
     const emailRegexp =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    if (!emailRegexp.test(email)) {
+    if (!emailRegexp.test(Email)) {
       return res.status(401).json({ msg: "Invalid Email" });
     }
 
-    let data = await users.findOne({ email });
+    let data = await users.findOne({ email: Email });
     // console.log(data);
     if (!data) {
       return res.status(401).json({ msg: "User not exist" });
     }
 
-    const isMatch = await bcrypt.compare(password, data.password);
+    const isMatch = await bcrypt.compare(Password, data.password);
     if (!isMatch)
       return res.status(400).json({ msg: "Password is incorrect." });
 
@@ -137,10 +140,7 @@ route.post("/signin", async (req, res) => {
     // } else {
     //   lastLoggedIn = data.currentLogin;
     // }
-
-    // update status
-    await users.updateOne({ email }, { $set: { currentLogin: fullDate } });
-
+    // console.log(token);
     return res.status(200).json({
       token: token,
     });
@@ -197,6 +197,8 @@ route.post("/newtask/:userId", async (req, res) => {
 
       await newTask.save();
 
+      newJobs(ISOTimeDate(dateToSend), title, data.email, data.name);
+
       await dateToSendEMail(
         data.email,
         data.name,
@@ -208,6 +210,7 @@ route.post("/newtask/:userId", async (req, res) => {
     }
 
     await newTask.save();
+    // console.log(newTask);
     return res.status(200).json({ msg: "Task Add successfully" });
   } catch (err) {
     return res.status(500).json({ msg: err });
@@ -217,6 +220,7 @@ route.post("/newtask/:userId", async (req, res) => {
 route.get("/tasks/:userId", async (req, res) => {
   try {
     let data = await task.find({ userId: req.params.userId }).limit(10);
+    // console.log("Data ==> ", data);
     return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ msg: "server Error" });
@@ -234,10 +238,11 @@ route.get("/task/:id", async (req, res) => {
 
 route.post("/updatetask/:id/:userId", async (req, res) => {
   try {
-    const { title, description, dateToSend, status } = req.body;
-    console.log(ISOTimeDate(dateToSend));
+    const { title, description, dateToSend } = req.body;
+    console.log(req.body);
     console.log("ok1");
     let data = await users.findOne({ userId: req.params.userId });
+    console.log(data);
     if (!data) {
       return res.status(404).json({ msg: "Something wrong" });
     }
@@ -256,12 +261,11 @@ route.post("/updatetask/:id/:userId", async (req, res) => {
         ISOTimeDate(dateToSend),
         dateToSend
       );
+
       return res.status(200).json({ msg: "Task Update successfully" });
     }
-    await task.findOneAndUpdate(
-      { _id: req.params.id },
-      { title, description, status }
-    );
+
+    await task.findOneAndUpdate({ _id: req.params.id }, { title, description });
 
     return res.status(200).json({ msg: "Task Update successfully" });
   } catch (err) {
