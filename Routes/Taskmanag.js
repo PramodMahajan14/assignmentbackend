@@ -10,12 +10,14 @@ const newJobs = require("../MailService/jobsStore");
 // =============================Routes======================
 
 route.get("/", async (req, res) => {
-  res.send("Hii Task Management");
+  res.send(`<h1>To DO APP</h1>`);
 });
 route.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    // console.log(req.body);
+    if (!name || !email || !password) {
+      return res.status(401).json({ msg: "All filed required" });
+    }
     const userId = uuidv4(); //used for generation og userId
 
     //regex for valid email
@@ -28,7 +30,7 @@ route.post("/signup", async (req, res) => {
     let data = await users.findOne({ email: email });
 
     if (data) {
-      return res.status(400).json({ msg: "This Email has already been taken" });
+      return res.status(400).json({ msg: "This Email already Exist" });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -85,7 +87,9 @@ route.get("/auth/verify/:id", async (req, res) => {
 route.post("/signin", async (req, res) => {
   try {
     const { Email, Password } = req.body;
-    // console.log(req.body);
+    if (!Email || !Password) {
+      return res.status(401).json({ msg: "Both are required" });
+    }
     const emailRegexp =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegexp.test(Email)) {
@@ -182,7 +186,9 @@ route.get("/profile", auth, async (req, res) => {
 route.post("/newtask/:userId", async (req, res) => {
   try {
     const { title, description, dateToSend } = req.body;
-    console.log(req.body);
+    if (!title || !description) {
+      return res.status(401).json({ msg: "All filed required" });
+    }
     console.log(req.params.userId);
     let data = await users.findOne({ userId: req.params.userId });
 
@@ -239,7 +245,9 @@ route.get("/task/:id", async (req, res) => {
 route.post("/updatetask/:id/:userId", async (req, res) => {
   try {
     const { title, description, dateToSend } = req.body;
-    console.log(req.body);
+    if (!title || !description) {
+      return res.status(401).json({ msg: "All filed required" });
+    }
     console.log("ok1");
     let data = await users.findOne({ userId: req.params.userId });
     console.log(data);
