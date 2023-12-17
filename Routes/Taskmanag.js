@@ -7,9 +7,11 @@ const auth = require("../Middleware/auth");
 const { sendEMail, dateToSendEMail } = require("../MailService/Mail");
 const moment = require("moment-timezone");
 const newJobs = require("../MailService/jobsStore");
+const path = require("path");
 // =============================Routes======================
 
 route.get("/", async (req, res) => {
+  res.sendFile(path.join(__dirname, "../static"));
   res.send(`<h1>To DO APP</h1>`);
 });
 route.post("/signup", async (req, res) => {
