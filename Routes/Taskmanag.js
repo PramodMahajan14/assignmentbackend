@@ -1,5 +1,5 @@
 const route = require("express").Router();
-const { task, users } = require("../models/taskmodel");
+const { task, users } = require("../Models/taskmodel");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
